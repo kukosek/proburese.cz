@@ -1,0 +1,39 @@
+{
+	"compilerOptions": {
+		"emitDecoratorMetadata": true,
+		"target": "ES2018",
+		"module": "CommonJS",
+		"moduleResolution": "Node",
+		"lib": [
+			"ESNext",
+			"ESNext.AsyncIterable",
+			"DOM"
+		],
+		"esModuleInterop": true,
+		"allowJs": true,
+		"sourceMap": true,
+		"strict": true,
+		"noEmit": true,
+		"experimentalDecorators": true,
+		"baseUrl": ".",
+		"paths": {
+			"~/*": [
+				"./*"
+			],
+			"@/*": [
+				"./*"
+			]
+		},
+		"types": [
+			"@nuxt/types",
+			"@types/node",
+			"buefy/types",
+			"vue-apollo/types"
+		]
+	},
+	"exclude": [
+		"node_modules",
+		".nuxt",
+		"dist"
+	]
+}
