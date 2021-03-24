@@ -1,4 +1,5 @@
 import "reflect-metadata"; import Express from 'express'
+require('dotenv').config()
 import cors from 'cors'
 import {ApolloServer} from 'apollo-server-express';
 
@@ -46,7 +47,7 @@ const main = async () => {
 	apolloServer.applyMiddleware({app})
 
 	app.use(cors())
-	app.listen(4000, () => {
+	app.listen(parseInt(process.env.PORT_APOLLO!), process.env.HOST!, () => {
 		console.log(" 🚀Server started")
 	})
 

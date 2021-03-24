@@ -1,4 +1,10 @@
+require('dotenv').config()
+
 export default {
+	server: {
+		host: process.env.HOST,
+		port: process.env.PORT_NUXT
+	},
 	// Global page headers: https://go.nuxtjs.dev/config-head
 	head: {
 		title: 'Probureše: Crowd-unfunding ANO 2021',
@@ -58,7 +64,7 @@ export default {
 	apollo: {
 		clientConfigs: {
 			default: {
-				httpEndpoint: 'http://localhost:4000/graphql',
+				httpEndpoint: process.env.GRAPHQL_ENDPOINT.toString(),
 			}
 		}
 	},
