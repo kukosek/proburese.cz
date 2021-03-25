@@ -58,6 +58,7 @@ mutation(
 })
 export default class Card extends Vue{
 	@Prop(Object) data!: CardData;
+	@Prop(Number) inputUserScore!: number
 	private checkboxGroup: string[] = []
 	private lastCheckboxGroup: string[] = []
 
@@ -65,61 +66,83 @@ export default class Card extends Vue{
 
 	private userScore = 0
 
+	private ignoreNext = false
 
 
 	@Watch('checkboxGroup')
 	onCheckboxGroupChanged(value: string[]) : void {
-		const lastLike : boolean = this.lastCheckboxGroup.includes("like")
-		const lastDislike : boolean = this.lastCheckboxGroup.includes("dislike")
-		let like = value.includes("like")
-		let dislike = value.includes("dislike")
-		if (like && lastDislike) {
-			this.checkboxGroup.splice(this.checkboxGroup.indexOf("dislike"), 1)
-		}
-		else if (dislike && lastLike) {
-			this.checkboxGroup.splice(this.checkboxGroup.indexOf("like"), 1)
-		}
+		if (this.authorized && this.changedByUser) {
+			if (!this.ignoreNext) {
+				const lastLike : boolean = this.lastCheckboxGroup.includes("like")
+				const lastDislike : boolean = this.lastCheckboxGroup.includes("dislike")
+				let like = value.includes("like")
+				let dislike = value.includes("dislike")
+				this.changedByUser = false
+				if (like && lastDislike) {
+					this.ignoreNext = true
+					this.checkboxGroup.splice(this.checkboxGroup.indexOf("dislike"), 1)
+				}
+				else if (dislike && lastLike) {
+					this.ignoreNext = true
+					this.checkboxGroup.splice(this.checkboxGroup.indexOf("like"), 1)
+				}
 
-		like = this.checkboxGroup.includes("like")
-		dislike = this.checkboxGroup.includes("dislike")
+				like = this.checkboxGroup.includes("like")
+				dislike = this.checkboxGroup.includes("dislike")
 
-		if (like) {
-			this.userScore = 1
-		} else if (dislike) {
-			this.userScore = -1
+				if (like) {
+					this.userScore = 1
+				} else if (dislike) {
+					this.userScore = -1
+				} else {
+					this.userScore = 0
+				}
+				this.onUserScoreChanged(this.userScore)
+				this.changedByUser = true
+			} else this.ignoreNext = false
+
+		} else if (this.changedByUser) {
+			this.$nuxt.$emit('pls-login')
+			if (this.checkboxGroup.length > 0) {
+				this.checkboxGroup = []
+			}
 		} else {
-			this.userScore = 0
+			this.changedByUser = true
 		}
 
 		this.lastCheckboxGroup = this.checkboxGroup;
 	}
 
-	@Watch('data')
-	onDataChanged(value: CardData) : void {
+	private changedByUser = true
+
+	onUserScoreChanged(value: number) : void {
+			this.$apollo.mutate({
+				mutation: LIKE_MUTATION,
+				variables: {
+					id: this.data.id,
+					userScore: value
+				}
+			})
 	}
 
-	@Watch('userScore')
-	onUserScoreChanged(value: number, oldValue: number) : void {
-		const savedString = localStorage.getItem("likes")
 
-		var saved : UserScores = {}
-		if (savedString != null) {
-			saved = JSON.parse(savedString)
+	@Watch("inputUserScore")
+	setupByInputUserScore() {
+		this.changedByUser = false
+		if (this.inputUserScore == 1) {
+			this.checkboxGroup = ["like"]
 		}
-		saved[this.data.id] = value
-
-		localStorage.setItem("likes", JSON.stringify(saved))
-
-		const scoreDelta =value-oldValue
-		this.$apollo.mutate({
-			mutation: LIKE_MUTATION,
-			variables: {
-				id: this.data.id,
-				userScore: scoreDelta
-			}
-		})
-
+		else if (this.inputUserScore == -1) {
+			this.checkboxGroup = ["dislike"]
+		}else {
+			this.checkboxGroup = []
 		}
-
+	}
+	mounted() {
+		this.setupByInputUserScore()
+	}
+	get authorized() {
+		return this.$store.state.authorized
+	}
 }
 </script>

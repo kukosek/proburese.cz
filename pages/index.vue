@@ -43,6 +43,7 @@
 		v-for="item in donates"
 		v-bind:key="item.id"
 		:data="item"
+		:inputUserScore="item.userScore"
 		>
 		</card>
 
@@ -78,6 +79,7 @@ query($skip: Float,
 		message
 		date
 		score
+		userScore
 	}
 }
 `
@@ -148,8 +150,16 @@ export default class Index extends Vue {
 					}
 				})
 			}
-		};
+		}
+		this.$nuxt.$on('force-refetch', () => {
+			this.$apollo.queries.donates.refetch()
+		})
 	}
+	beforeDestroy(){
+		this.$nuxt.$off('force-refetch')
+	}
+
+
 
 
 }

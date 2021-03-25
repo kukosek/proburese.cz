@@ -2,7 +2,8 @@ import {
 	Resolver, Query, Arg,
 	Field, ArgsType, Args,
 	registerEnumType, ID, InputType,
-	Mutation
+	Mutation, Ctx,
+	Authorized
 } from 'type-graphql';
 import {Like} from "typeorm";
 import {SortType} from "../types/Sort"
@@ -14,6 +15,7 @@ registerEnumType(SortType, {
 
 
 import {Donate} from "../entity/Donate"
+import {UserScore} from "../entity/UserScore"
 
 import {
 	//IsDate,
@@ -21,6 +23,7 @@ import {
 	Min,
 	Max,
 } from 'class-validator';
+import {ContextType} from './Context';
 
 
 @ArgsType()
@@ -48,8 +51,8 @@ class ChangeDonateScore implements Partial<Donate> {
 	id!: number;
 
 	@Field()
-	@Min(-2)
-	@Max(2)
+	@Min(-1)
+	@Max(1)
 	userScore: number = 0
 }
 
@@ -57,7 +60,7 @@ class ChangeDonateScore implements Partial<Donate> {
 @Resolver(Donate)
 export class DonateResolver {
 	@Query(() => [Donate])
-	async donates(@Args() {skip, take, search, sortBy}: DonatesArgs) {
+	async donates(@Args() {skip, take, search, sortBy}: DonatesArgs, @Ctx() ctx: ContextType) {
 		let query = Donate.createQueryBuilder()
 			.skip(skip)
 			.take(take)
@@ -87,19 +90,57 @@ export class DonateResolver {
 				'id': 'DESC'
 			})
 		}
-		return await query.getMany()
+
+		const items = await query.getMany()
+
+		// Now we modify the values of scores based on User's likes
+		if (ctx.user) {
+			for (const item of items) {
+				const userScore = await UserScore.findOne({
+					where: {
+						userId: ctx.user.id,
+						donateId: item.id
+					}
+				})
+				if (userScore) {
+					item.userScore = userScore.score
+				}
+			}
+		}
+
+		return items
 	}
 
+	@Authorized()
 	@Mutation(() => Donate)
-	async mutateDonate(@Arg("data") changeData: ChangeDonateScore): Promise<Donate> {
+	async mutateDonate(@Arg("data") changeData: ChangeDonateScore, @Ctx() ctx: ContextType): Promise<Donate> {
 		return Donate.findOne({where: {id: changeData.id}}).then((donate) => {
 			if (donate === undefined) {
-				console.log("donate undefined")
 				return Donate.create();
 			} else {
-				donate.score = Number(donate.score) + changeData.userScore
-				donate.save()
-				return donate;
+				return UserScore.findOne({
+					where: {
+						userId: ctx.user.id,
+						donateId: changeData.id
+					}
+				}).then((userScore) => {
+					if (userScore === undefined) {
+						userScore = UserScore.create()
+						userScore.userId = ctx.user.id
+						userScore.donateId = changeData.id
+					}
+
+					const previousScore: number = Number(userScore.score)
+
+					userScore.score = changeData.userScore
+					userScore.save()
+
+					const scoreChange = Number(userScore.score) - previousScore
+
+					donate.score = Number(donate.score) + scoreChange
+					donate.save()
+					return donate;
+				})
 			}
 		})
 	}

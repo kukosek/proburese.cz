@@ -14,6 +14,58 @@
         </a>
 
       </div>
+	  <div class="navbar-end">
+		  <div class="navbar-item">
+			  <a
+			  v-if="!authorized"
+			  class="button is-light"
+			  @click="isComponentModalActive = true"
+			  >
+				Log in
+			  </a>
+		  </div>
+
+		  <div v-if="authorized" class="navbar-item">
+			  <span>{{me.displayName}}</span>
+		  </div>
+		  <div v-if="authorized" class="navbar-item">
+			  <b-button @click="logout()" size="is-small">Odhlásit se</b-button>
+		  </div>
+	  </div>
+	  <b-modal
+            v-model="isComponentModalActive"
+            has-modal-card
+            trap-focus
+            :destroy-on-hide="false"
+            aria-role="dialog"
+            aria-label="Example Modal"
+            aria-modal>
+				<form action="">
+					<div class="modal-card" style="width: auto">
+						<header class="modal-card-head">
+							<p class="modal-card-title">Login</p>
+							<button
+								type="button"
+								class="delete"
+								@click="isComponentModalActive = false"/>
+						</header>
+						<section class="modal-card-body">
+
+							<p>
+							<b-button
+								tag="a"
+								href="/api/auth/facebook"
+								icon-left="facebook"
+								class="button has-text-centered is-link">
+							Přihlásit se přes Facebook</b-button>
+							</p>
+
+						</section>
+						<footer class="modal-card-foot">
+						</footer>
+					</div>
+				</form>
+        </b-modal>
     </nav>
 
     <section class="main-content columns">
@@ -54,23 +106,77 @@
   </div>
 </template>
 
-<script>
-export default {
-  data () {
-    return {
-      items: [
-        {
-          title: 'Vzkazy',
-          icon: 'home',
-          to: { name: 'index' }
-        },
-        {
-          title: 'O stránce',
-          icon: 'information',
-          to: { name: 'about' }
-        }
-      ]
-    }
-  }
+<script lang="ts">
+import { Prop, Watch, Component, Vue , Inject} from 'vue-property-decorator'
+import  gql  from "graphql-tag"
+import { BuresUser  } from "~/server-middleware/entity/User"
+
+const ME_QUERY = gql`
+query {
+	me {
+		displayName
+	}
+}
+`
+const LOGOUT_MUTATION = gql`
+mutation {
+	logout {
+		displayName
+	}
+}
+`
+
+interface MeQuery {
+	displayName: string
+}
+
+
+@Component({
+	apollo: {
+		me: {
+			query: ME_QUERY,
+			prefetch: false
+		}
+	}
+})
+export default class Default extends Vue {
+	private me: BuresUser | undefined
+	private isComponentModalActive  = false
+    private items = [
+		{
+			title: 'Vzkazy',
+			icon: 'home',
+			to: { name: 'index' }
+		},
+		{
+			title: 'O stránce',
+			icon: 'information',
+			to: { name: 'about' }
+		}
+	]
+
+	get authorized() {
+		return this.$store.state.authorized
+	}
+
+	@Watch("me")
+	onCurrentUserChanged() {
+		this.$store.commit("authorized", Boolean(this.me?.displayName ))
+	}
+
+	logout() {
+		this.$apollo.mutate({ mutation: LOGOUT_MUTATION}).then((fetchResult) => {
+			this.$store.commit("authorized", fetchResult?.data.displayName)
+			this.$nuxt.$emit('force-refetch')
+		})
+	}
+	created() {
+		this.$nuxt.$on('pls-login', () => {
+			this.isComponentModalActive = true
+		})
+	}
+	beforeDestroy(){
+		this.$nuxt.$off('pls-login')
+	}
 }
 </script>
