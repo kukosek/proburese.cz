@@ -1,14 +1,20 @@
 import {createConnection} from "typeorm";
+require('dotenv').config()
 import {DonateScrapingState} from "./entity/DonateScrapingState"
 import {Donate} from "./entity/Donate"
+import {normalizeName} from "./utils/normalize-name"
+import {Donator} from "./entity/Donator"
+import {BuresUser as User} from "./entity/User"
 import {KbResponse} from "./scrape/kbtypes"
 import {getRepository, Repository} from "typeorm"
 import {Moment} from 'moment'
 import fetch from 'node-fetch'
 let moment = require('moment');
 
+const perform_full_parse: boolean =
+	process.env.PERFORM_FULL_PARSE! == "true"
 
-const accounts: string[] = ["4070217"]
+const accounts: string[] = ["4070217", "4090453"]
 
 const baseUrl = "https://www.kb.cz/transparentsapi/transactions/"
 const timer = (ms: number) => new Promise(res => setTimeout(res, ms))
@@ -18,6 +24,7 @@ async function main() {
 		= getRepository(DonateScrapingState)
 
 	const donateRepository: Repository<Donate> = getRepository(Donate)
+	const userRepository: Repository<User> = getRepository(User)
 	console.log("made connection")
 	var currentSkip: number = 0
 	for (const accountId of accounts) {
@@ -29,6 +36,10 @@ async function main() {
 			account = DonateScrapingState.create()
 			account.account = accountId;
 		}
+
+		let perform_full_parse_now = perform_full_parse
+
+		if (account.records < 1000) perform_full_parse_now = true
 
 		var parsingSameCount = 0;
 		while (parsingSameCount < 30) {
@@ -46,7 +57,7 @@ async function main() {
 						const notesParts = item.notes.split("<br />")
 
 						// Check if the notes fields has the length we need
-						if (notesParts.length >= 3) {
+						if (notesParts.length >= 2) {
 							const transactionType = notesParts[1].toLowerCase()
 							// We only want to add transactions that were sent to the account
 							// not the ones that were send back
@@ -57,7 +68,9 @@ async function main() {
 								donate.account = accountId
 
 								donate.author = notesParts[0]
-								donate.message = notesParts[2].trim()
+								if (notesParts.length > 2)
+									donate.message = notesParts[2].trim()
+								else donate.message = ""
 
 								//Check if donate with same message already exists
 								//If yes, set duplicate to true
@@ -70,9 +83,9 @@ async function main() {
 								}
 
 								// determine the amount in CZK
-								const amountParts = item.amount.split(' ')
 								const amount = parseFloat(
-									amountParts[0].replace(',', '.'))
+									item.amount.replace(" CZK", "").replace(',', '.').replace(" ", "")
+								)
 								donate.amount = amount.toString()
 
 								// update statistics
@@ -95,24 +108,83 @@ async function main() {
 											bankId: donate.bankId,
 											message: donate.message,
 											author: donate.author,
-											amount: donate.amount
+											amount: donate.amount,
+											account: donate.account
 										}
 									})
 
 								if (foundDonate === undefined) {
+
+									let donateDonator = await Donator.findOne({
+										where: {
+											name: donate.author
+										}
+									})
+
+									if (donateDonator === undefined) {
+										donateDonator = Donator.create()
+										donateDonator.name = donate.author
+									}
+
+									donateDonator.amountDonated =
+										(parseFloat(donateDonator.amountDonated) +
+											amount).toString()
+									donateDonator.donationCount++
+
+
+									// find user
+
+									const normalizedAuthor = normalizeName(donate.author)
+									const normalizedAuthorSplitted = normalizedAuthor.split(" ")
+
+									donateDonator.normalizedName = normalizedAuthor
+
+
+									let query = userRepository.createQueryBuilder("user")
+
+									let whereExpr = ""
+									let whereParams: any = {}
+									for (let i = 0; i < normalizedAuthorSplitted.length; i++) {
+										if (i == 0 || i == normalizedAuthorSplitted.length - 1) {
+											const normAuthorPart = normalizedAuthorSplitted[i]
+											const searchLikeStr = "%" + normAuthorPart + "%"
+
+											whereExpr += "user.normalizedName LIKE :v" + i.toString()
+											whereParams["v" + i.toString()] = searchLikeStr
+
+											if (i != normalizedAuthorSplitted.length - 1) {
+												whereExpr += " AND "
+											}
+										}
+									}
+
+									query = query.where(whereExpr, whereParams)
+									const foundUser = await query.getOne()
+
+
+
+									await donateDonator.save()
+									donate.authorId = donateDonator.id
 									console.log(donate)
-									donate.save()
-									account.save()
+									if (foundUser) {
+										console.log("found user with this name")
+										console.log("donate")
+										foundUser.donatorId = donateDonator.id
+										await foundUser.save()
+									}
+									await donate.save()
+									await account.save()
 									parsingSameCount = 0
 								} else {
-									console.log("already parsed")
+									//console.log("already parsed at skip: ", currentSkip)
 									// We already parsed it somewhere, so we can assume the next
 									// items will be also parsed
-									parsingSameCount++
+									if (!perform_full_parse_now)
+										parsingSameCount++
 								}
 
 							} else {
-								console.info("Odchozi")
+								//console.info("Odchozi")
 							}
 						} else {
 							console.debug("errorous:", item.notes)
@@ -124,6 +196,7 @@ async function main() {
 						currentSkip += items.length
 					} else {
 						parsingSameCount = 50;
+						console.log("No more! At", currentSkip)
 					}
 				} else {
 					console.log("HTTP-Error: " + response.status);

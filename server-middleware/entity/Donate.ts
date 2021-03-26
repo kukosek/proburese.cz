@@ -24,6 +24,10 @@ export class Donate extends BaseEntity {
 	author!: string;
 
 	@Field()
+	@Column()
+	authorId!: number
+
+	@Field()
 	@Column({type: 'real'})
 	amount!: string;
 

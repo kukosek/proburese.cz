@@ -161,7 +161,11 @@ export default class Default extends Vue {
 
 	@Watch("me")
 	onCurrentUserChanged() {
-		this.$store.commit("authorized", Boolean(this.me?.displayName ))
+		const authorized = Boolean(this.me?.displayName )
+		if (authorized) {
+			this.$nuxt.$emit('force-refetch')
+		}
+		this.$store.commit("authorized", authorized)
 	}
 
 	logout() {

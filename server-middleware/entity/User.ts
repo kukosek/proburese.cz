@@ -10,11 +10,22 @@ export class BuresUser extends BaseEntity {
 	@PrimaryGeneratedColumn()
 	id: Number = 0
 
+	@Column()
+	provider!: string;
+
 	@Field({nullable: true})
 	@Column()
 	profileId: string = ""
 
 	@Field({nullable: true})
 	@Column()
-	displayName: String = ""
+	displayName: string = ""
+
+	@Field({nullable: true})
+	@Column()
+	normalizedName: string = ""
+
+	@Field({nullable: true})
+	@Column({nullable: true})
+	donatorId!: number
 }

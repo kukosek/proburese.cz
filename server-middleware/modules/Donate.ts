@@ -15,6 +15,7 @@ registerEnumType(SortType, {
 
 
 import {Donate} from "../entity/Donate"
+import {Donator} from "../entity/Donator"
 import {UserScore} from "../entity/UserScore"
 
 import {
@@ -43,6 +44,9 @@ class DonatesArgs {
 
 	@Field(() => SortType)
 	sortBy: SortType = SortType.HOT
+
+	@Field(() => Number, {nullable: true})
+	donatorId!: number
 }
 
 @InputType({description: "New recipe data"})
@@ -60,18 +64,23 @@ class ChangeDonateScore implements Partial<Donate> {
 @Resolver(Donate)
 export class DonateResolver {
 	@Query(() => [Donate])
-	async donates(@Args() {skip, take, search, sortBy}: DonatesArgs, @Ctx() ctx: ContextType) {
+	async donates(@Args() {skip, take, search, sortBy, donatorId}: DonatesArgs, @Ctx() ctx: ContextType) {
 		let query = Donate.createQueryBuilder()
 			.skip(skip)
 			.take(take)
 		var whereExpr = "duplicate = false"
-		var whereParams = {searchLikeStr: ""}
+		var whereParams = {searchLikeStr: "", authorId: 0}
 		if (search != "") {
 			whereExpr += " AND (LOWER(message) LIKE :searchLikeStr OR LOWER(author) LIKE :searchLikeStr)"
 			whereParams.searchLikeStr = `%${search.toLowerCase()}%`
 		}
 
+		if (donatorId) {
+			whereExpr += " AND author_id = :authorId"
+			whereParams.authorId = donatorId
+		}
 		query = query.where(whereExpr, whereParams)
+
 
 		if (sortBy == SortType.NEWEST) {
 			query = query.orderBy({
@@ -111,6 +120,25 @@ export class DonateResolver {
 		return items
 	}
 
+	@Query(() => Donate, {nullable: true})
+	async donate(@Arg("id") id: number, @Ctx() ctx: ContextType) {
+		const donate = await Donate.findOne({where: {id: id}})
+		if (donate) {
+			if (ctx.user) {
+				const userScore = await UserScore.findOne({
+					where: {
+						userId: ctx.user.id,
+						donateId: id
+					}
+				})
+				if (userScore) {
+					donate.userScore = userScore.score
+				}
+			}
+		}
+		return donate
+	}
+
 	@Authorized()
 	@Mutation(() => Donate)
 	async mutateDonate(@Arg("data") changeData: ChangeDonateScore, @Ctx() ctx: ContextType): Promise<Donate> {
@@ -137,7 +165,16 @@ export class DonateResolver {
 
 					const scoreChange = Number(userScore.score) - previousScore
 
+
+
 					donate.score = Number(donate.score) + scoreChange
+
+					Donator.findOne({where: {id: donate.authorId}}).then((donator) => {
+						if (donator) {
+							donator.score += scoreChange
+						}
+					})
+
 					donate.save()
 					return donate;
 				})

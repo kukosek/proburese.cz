@@ -1,4 +1,5 @@
 require('dotenv').config()
+import {SnakeNamingStrategy} from "typeorm-naming-strategies"
 
 export default {
 	"name": "default",
@@ -12,5 +13,6 @@ export default {
 	"logging": false,
 	"entities": [
 		"server-middleware/entity/*.*"
-	]
+	],
+	namingStrategy: new SnakeNamingStrategy()
 }

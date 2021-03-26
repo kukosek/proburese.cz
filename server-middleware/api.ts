@@ -3,7 +3,7 @@ require('dotenv').config()
 import cors from 'cors'
 import {ApolloServer} from 'apollo-server-express';
 
-import {createConnection, getRepository} from "typeorm";
+import {createConnection, getRepository, Repository} from "typeorm";
 
 import {ContextType} from "./modules/Context"
 
@@ -22,14 +22,65 @@ var session = require("express-session"),
 	bodyParser = require("body-parser");
 
 import {BuresUser} from "./entity/User"
+import {Donator} from "./entity/Donator"
+
+import {normalizeName} from "./utils/normalize-name"
 
 import {TypeormStore} from "connect-typeorm"
 import {Session} from "./entity/Session"
 
 import {authChecker} from "./modules/auth-checker"
+import {DonatorResolver} from './modules/Donator';
 
 
 
+async function registerUser(repository: Repository<Donator>, profile: passport.Profile): Promise<BuresUser | undefined> {
+	return BuresUser.findOne({
+		where: {
+			profileId: profile.id,
+			provider: profile.provider
+		}
+	}).then((foundUser) => {
+		if (!foundUser) {
+			foundUser = BuresUser.create()
+			foundUser.profileId = profile.id
+			foundUser.provider = profile.provider
+			foundUser.displayName = profile.displayName
+			foundUser.normalizedName = normalizeName(foundUser.displayName)
+
+			const normalizedSplitted = foundUser.normalizedName.split(" ")
+
+			// assign donator to this man
+			let query = repository.createQueryBuilder("donator")
+			let whereExpr = ""
+			let whereParams: any = {}
+
+			for (let i = 0; i < normalizedSplitted.length; i++) {
+				if (i == 0 || i == normalizedSplitted.length - 1) {
+					const normAuthorPart = normalizedSplitted[i]
+					const searchLikeStr = "%" + normAuthorPart + "%"
+
+					whereExpr += "donator.normalizedName LIKE :v" + i.toString()
+					whereParams["v" + i.toString()] = searchLikeStr
+
+					if (i != normalizedSplitted.length - 1) {
+						whereExpr += " AND "
+					}
+				}
+			}
+
+			query = query.where(whereExpr, whereParams)
+			query.getOne().then((foundDonator) => {
+
+				if (foundDonator && foundUser) {
+					foundUser.donatorId = foundDonator.id
+				}
+				foundUser?.save()
+			})
+		}
+		return foundUser
+	})
+}
 
 
 
@@ -37,6 +88,7 @@ const app = Express();
 
 const main = async () => {
 	await createConnection();
+	const donatorRepository = getRepository(Donator)
 
 	const sessionRepo = getRepository(Session)
 
@@ -63,11 +115,23 @@ const main = async () => {
 	passport.deserializeUser((user: string, done) => {
 		BuresUser.findOne({where: {profileId: user}}).then((user) => {
 			done(null, user)
+		}).catch((err) => {
+			done(err, null)
 		});
 	});
 
+	app.use((err: boolean, req: Express.Request, res: Express.Response, next: Express.NextFunction) => {
+		if (err) {
+			req.logout(); // So deserialization won't continue to fail.
+			next();
+		} else {
+			next();
+		}
+	});
+
+
 	const schema = await buildSchema({
-		resolvers: [DonateResolver, UserResolver],
+		resolvers: [DonateResolver, UserResolver, DonatorResolver],
 		authChecker: authChecker,
 	});
 	const apolloServer = new ApolloServer({
@@ -112,13 +176,7 @@ const main = async () => {
 		callbackURL: process.env.OAUTH_REDIRECT_BASEURL + "/api/auth/facebook/callback"
 	},
 		(accessToken: String, refreshToken: String, profile: passport.Profile, done) => {
-			BuresUser.findOne({where: {profileId: profile.id}}).then((foundUser) => {
-				if (!foundUser) {
-					foundUser = BuresUser.create()
-					foundUser.profileId = profile.id
-					foundUser.displayName = profile.displayName
-					foundUser.save()
-				}
+			registerUser(donatorRepository, profile).then((foundUser) => {
 				return done(null, foundUser)
 			})
 		}
