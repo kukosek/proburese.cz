@@ -13,8 +13,7 @@ import {BuresUser as User} from "../entity/User"
 
 @Resolver(User)
 export class UserResolver {
-	@Authorized()
-	@Query(() => User)
+	@Query(() => User, {nullable: true})
 	async me(@Ctx() ctx: ContextType) {
 		return ctx.user
 	}

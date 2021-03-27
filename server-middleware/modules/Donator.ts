@@ -14,15 +14,11 @@ import {ContextType} from './Context';
 
 import {Donator} from "../entity/Donator"
 
-export enum DonatorSortType {
-	AMOUNT = "AMOUNT",
-	LIKES = "LIKES",
-	COUNT = "COUNT",
-}
+import {DonatorSortType} from "../types/Sort"
+
 
 registerEnumType(DonatorSortType, {
-	name: "DonatorsSortType", // this one is mandatory
-	description: "Enumeration for sort types", // this one is optional
+	name: "DonatorsSortType", // this one is mandatory description: "Enumeration for sort types", // this one is optional
 });
 
 @ArgsType()
@@ -38,12 +34,16 @@ class DonatorsArgs {
 
 	@Field(() => DonatorSortType)
 	sortBy: DonatorSortType = DonatorSortType.AMOUNT
+
+	@Field(() => String)
+	@Length(0, 50)
+	search: string = ""
 }
 
 @Resolver(Donator)
 export class DonatorResolver {
 	@Query(() => [Donator])
-	async donators(@Args() {skip, take, sortBy}: DonatorsArgs,
+	async donators(@Args() {skip, take, sortBy, search}: DonatorsArgs,
 		@Ctx() ctx: ContextType) {
 		let query = Donator.createQueryBuilder()
 			.skip(skip).take(take)
@@ -60,6 +60,13 @@ export class DonatorResolver {
 				'score': 'DESC'
 			})
 		}
+		if (search != "") {
+			query = query.where(
+				"LOWER(name) LIKE :searchLikeStr",
+				{searchLikeStr: '%' + search.toLowerCase() + '%'}
+			)
+		}
+
 		const items = await query.getMany()
 		return items
 	}

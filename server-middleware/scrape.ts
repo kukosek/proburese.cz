@@ -82,10 +82,15 @@ async function main() {
 									donate.duplicate = true;
 								}
 
+								const amountStr = item.amount
+									.replace(',', '.')
+									.replace(/[^\d.-]/g, '');
 								// determine the amount in CZK
-								const amount = parseFloat(
-									item.amount.replace(" CZK", "").replace(',', '.').replace(" ", "")
-								)
+								const amount = parseFloat(amountStr)
+								if (amountStr.length > 5) {
+									console.log(amountStr, "->", amount)
+								}
+
 								donate.amount = amount.toString()
 
 								// update statistics
@@ -165,7 +170,7 @@ async function main() {
 
 									await donateDonator.save()
 									donate.authorId = donateDonator.id
-									console.log(donate)
+									//console.log(donate)
 									if (foundUser) {
 										console.log("found user with this name")
 										console.log("donate")

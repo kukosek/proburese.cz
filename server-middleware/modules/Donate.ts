@@ -172,6 +172,7 @@ export class DonateResolver {
 					Donator.findOne({where: {id: donate.authorId}}).then((donator) => {
 						if (donator) {
 							donator.score += scoreChange
+							donator.save()
 						}
 					})
 

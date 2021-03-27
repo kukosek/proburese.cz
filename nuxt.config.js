@@ -9,7 +9,7 @@ export default {
 	head: {
 		title: 'Probureše: Crowd-unfunding ANO 2021',
 		htmlAttrs: {
-			lang: 'en'
+			lang: 'cs'
 		},
 		meta: [
 			{charset: 'utf-8'},

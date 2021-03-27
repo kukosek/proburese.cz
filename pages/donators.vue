@@ -1,4 +1,8 @@
-<template> <section class="section">
+<template>
+	<section class="section">
+		<h2 class="title is-3 has-text-grey">
+		Přehled přispěvatelů na transparentní účet ANO
+		</h2>
 	  <div class="columns">
 		  <b-dropdown
 			class="column"
@@ -36,28 +40,27 @@
 			</b-input>
 		</b-field>
 	</div>
-	<b-progress v-if="$apollo.queries.donates.loading" type="is-primary" size="is-small"></b-progress>
+	<b-progress v-if="$apollo.queries.donators.loading" type="is-primary" size="is-small"></b-progress>
     <div class="is-mobile">
 
-		<card
-		v-for="item in donates"
+		<donator-card
+		v-for="item in donators"
 		v-bind:key="item.id"
 		:data="item"
-		:inputUserScore="item.userScore"
 		>
-		</card>
+		</donator-card>
 
     </div>
   </section>
 </template>
 
 <script lang="ts">
-import Card from '~/components/Card.vue'
-import {CardData, UserScores} from '~/assets/ts/interfaces'
+import DonatorCard from '~/components/DonatorCard.vue'
+import {DonatorData} from '~/assets/ts/interfaces'
 import { Prop, Watch, Component, Vue , Inject} from 'vue-property-decorator'
 import ApolloClient from 'apollo-boost';
 import gql from 'graphql-tag'
-import { SortType } from "~/server-middleware/types/Sort"
+import { DonatorSortType as SortType} from "~/server-middleware/types/Sort"
 
 interface Sort {
 	value: SortType,
@@ -65,22 +68,19 @@ interface Sort {
 	text: string
 }
 
-const DONATES_QUERY = gql`
+const DONATORS_QUERY = gql`
 query($skip: Float,
 	  $take: Float,
 	  $search: String,
-	  $sortBy: SortType
+	  $sortBy: DonatorsSortType
 
 ) {
-	donates(skip: $skip, take: $take, search: $search, sortBy: $sortBy) {
+	donators(skip: $skip, take: $take, search: $search, sortBy: $sortBy) {
 		id
-		author
-		authorId
-		amount
-		message
-		date
+		name
+		amountDonated
+		donationCount
 		score
-		userScore
 	}
 }
 `
@@ -89,16 +89,16 @@ const take = 25;
 
 @Component({
 	components: {
-		Card
+		DonatorCard
 	},
 	apollo: {
-		donates: {
-			query: DONATES_QUERY,
+		donators: {
+			query: DONATORS_QUERY,
 			variables: {
 				skip: 0,
 				take: take,
 				search: "",
-				sortBy: "HOT"
+				sortBy: SortType.AMOUNT
 			},
 			prefetch: true
 
@@ -108,14 +108,14 @@ const take = 25;
 
 
 export default class Index extends Vue {
-	private donates: CardData[] = [
+	private donators: DonatorData[] = [
 	]
 
 	private name: string = 'HomePage'
 	private sorts: Sort[]  =  [
-		{ value: SortType.HOT, icon: 'trending-up', text: 'Žhavé' },
-		{ value: SortType.NEWEST, icon: 'clock-outline', text: 'Nejnovější' },
-		{ value: SortType.TOP, icon: 'arrow-up-thick', text: 'Nejlepší' },
+		{ value: SortType.AMOUNT, icon: 'currency-usd', text: 'Celkově zasláno' },
+		{ value: SortType.COUNT, icon: 'account-details', text: 'Počet zaslaných' },
+		{ value: SortType.LIKES, icon: 'thumbs-up-down', text: 'Počet liků' },
 	]
 	private currentSort: Sort = this.sorts[0]
 	private searchString: string = ""
@@ -129,12 +129,12 @@ export default class Index extends Vue {
 	@Watch('currentSort')
 	triggerSearch(value: string) : void {
 		this.hasMore = true
-		this.donates = []
-		this.$apollo.queries.donates.setVariables({
+		this.donators = []
+		this.$apollo.queries.donators.setVariables({
 			search: this.searchString,
 			sortBy: this.currentSort.value.toString()
 		})
-		this.$apollo.queries.donates.refresh()
+		this.$apollo.queries.donators.refresh()
 	}
 
 	private hasMore = true
@@ -143,16 +143,16 @@ export default class Index extends Vue {
 		window.onscroll = () => {
 			if (this.hasMore) {
 				let distFromBottom = document.documentElement.offsetHeight - document.documentElement.scrollTop - window.innerHeight
-				if (distFromBottom < 800 && !this.$apollo.queries.donates.loading) {
-					this.$apollo.queries.donates.fetchMore({
-						variables: { skip: this.donates.length + take*this.page },
+				if (distFromBottom < 800 && !this.$apollo.queries.donators.loading) {
+					this.$apollo.queries.donators.fetchMore({
+						variables: { skip: this.donators.length + take*this.page },
 						updateQuery: (previousResult, { fetchMoreResult }) => {
-							if (fetchMoreResult.donates.length == 0 ) {
+							if (fetchMoreResult.donators.length == 0 ) {
 								this.hasMore = false
 							}
 							return {
 								__typename: previousResult.__typename,
-								donates: [...previousResult.donates, ...fetchMoreResult.donates ]
+								donators: [...previousResult.donators, ...fetchMoreResult.donators ]
 							}
 						}
 					})
@@ -160,7 +160,7 @@ export default class Index extends Vue {
 			}
 		}
 		this.$nuxt.$on('force-refetch', () => {
-			this.$apollo.queries.donates.refetch()
+			this.$apollo.queries.donators.refetch()
 		})
 	}
 	beforeDestroy(){

@@ -1,4 +1,40 @@
-<template> <section class="section">
+<template>
+	<section class="section">
+	<div class="level">
+		<div class="level-left">
+			<h2 class="level-item title is-3 has-text-grey">
+				{{ donator.name }}
+			</h2>
+			<span class="level-item" v-if="parseFloat(donator.amountDonated) > 1000">
+				(<a :href="hlidacUrl" target="_blank">Hlídač</a>)
+			</span>
+		</div>
+		<div class="level-right">
+			<share class="level-item"
+					:shareUrl="'https://proburese.cz/donator/'+id"
+			/>
+		</div>
+	</div>
+	<nav class="level">
+	  <div class="level-item has-text-centered">
+		<div>
+		  <p class="heading">Celkově zasláno</p>
+		  <p class="title">{{donator.amountDonated}} kč</p>
+		</div>
+	  </div>
+	  <div class="level-item has-text-centered">
+		<div>
+		  <p class="heading">Počet příspěvků</p>
+		  <p class="title">{{donator.donationCount}}</p>
+		</div>
+	  </div>
+	  <div class="level-item has-text-centered">
+		<div>
+		  <p class="heading">Posbíráno lajků</p>
+		  <p class="title">{{donator.score}}</p>
+		</div>
+	  </div>
+	</nav>
 	  <div class="columns">
 		  <b-dropdown
 			class="column"
@@ -69,10 +105,11 @@ const DONATES_QUERY = gql`
 query($skip: Float,
 	  $take: Float,
 	  $search: String,
-	  $sortBy: SortType
+	  $sortBy: SortType,
+	  $donatorId: Float
 
 ) {
-	donates(skip: $skip, take: $take, search: $search, sortBy: $sortBy) {
+	donates(skip: $skip, take: $take, search: $search, sortBy: $sortBy, donatorId: $donatorId) {
 		id
 		author
 		authorId
@@ -85,9 +122,27 @@ query($skip: Float,
 }
 `
 
+const DONATOR_QUERY = gql`
+query($id: Float!) {
+	donator(id: $id) {
+		name,
+		amountDonated,
+		donationCount,
+		score
+	}
+}
+`
+
+interface Donator {
+	name: string,
+	amountDonated: number,
+	donationCount: number,
+	score: number
+}
+
 const take = 25;
 
-@Component({
+@Component<Index>({
 	components: {
 		Card
 	},
@@ -98,11 +153,20 @@ const take = 25;
 				skip: 0,
 				take: take,
 				search: "",
-				sortBy: "HOT"
+				sortBy: "HOT",
+				donatorId: null
 			},
-			prefetch: true
+			prefetch: true,
+		},
 
+		donator: {
+			query: DONATOR_QUERY,
+			variables: {
+				id: 0
+			},
+			prefetch: true,
 		}
+
 	}
 })
 
@@ -110,6 +174,9 @@ const take = 25;
 export default class Index extends Vue {
 	private donates: CardData[] = [
 	]
+	private donator: Donator = {name: "", amountDonated: 0, donationCount: 0, score: 0}
+
+	private id = 0
 
 	private name: string = 'HomePage'
 	private sorts: Sort[]  =  [
@@ -124,22 +191,36 @@ export default class Index extends Vue {
 	private page = 0
 
 
-
 	@Watch('searchString')
 	@Watch('currentSort')
 	triggerSearch(value: string) : void {
 		this.hasMore = true
+		const id = parseInt(this.$route.params.donator)
 		this.donates = []
 		this.$apollo.queries.donates.setVariables({
 			search: this.searchString,
-			sortBy: this.currentSort.value.toString()
+			sortBy: this.currentSort.value.toString(),
+			donatorId: id
 		})
 		this.$apollo.queries.donates.refresh()
 	}
 
+	created() {
+		const id = parseInt(this.$route.params.donator)
+		this.id = id
+		this.$apollo.queries.donates.setVariables({donatorId: id})
+		this.$apollo.queries.donator.setVariables({id: id})
+		if (process.server) {
+			this.$apollo.queries.donates.refetch()
+			this.$apollo.queries.donator.refetch()
+		}
+	}
+
 	private hasMore = true
 
+
 	mounted() {
+		//document.title = "Příspěvky od " + this.donator.name + ' - Probureše'
 		window.onscroll = () => {
 			if (this.hasMore) {
 				let distFromBottom = document.documentElement.offsetHeight - document.documentElement.scrollTop - window.innerHeight
@@ -165,6 +246,9 @@ export default class Index extends Vue {
 	}
 	beforeDestroy(){
 		this.$nuxt.$off('force-refetch')
+	}
+	get hlidacUrl() {
+		return "https://www.hlidacstatu.cz/hledat?q="+this.donator.name.split(' ').join('+')
 	}
 
 

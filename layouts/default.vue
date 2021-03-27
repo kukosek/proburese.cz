@@ -149,6 +149,11 @@ export default class Default extends Vue {
 			to: { name: 'index' }
 		},
 		{
+			title: 'Real Lovers',
+			icon: 'cash-100',
+			to: { name: 'donators' }
+		},
+		{
 			title: 'O stránce',
 			icon: 'information',
 			to: { name: 'about' }

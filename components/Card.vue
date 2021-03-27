@@ -3,7 +3,14 @@
     <div class="card">
       <div class="card-content" >
 		<div class="columns is-vcentered is-desktop">
-			<p class="column is-narrow card-header-title has-text-grey"> {{ data.amount }} kč od {{ data.author }}
+			<p class="column is-narrow card-header-title has-text-grey">
+				{{ data.amount }} kč od
+					<nuxt-link
+					  :to="'/donator/'+data.authorId"
+					  exact-active-class="is-active"
+					>
+						{{ data.author }}
+					</nuxt-link>
 			</p>
 			<div v-html="data.message" v-linkified class="column ">
 			</div>
@@ -44,6 +51,7 @@ mutation(
 	mutateDonate(data: {id: $id, userScore: $userScore}) {
 		id
 		author
+		authorId
 		amount
 		message
 		date
