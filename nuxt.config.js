@@ -14,10 +14,13 @@ export default {
 		meta: [
 			{charset: 'utf-8'},
 			{name: 'viewport', content: 'width=device-width, initial-scale=1'},
+			{property: "og:image", content: '/ogimage.png'},
+			{property: "og:image:width", content: "1200"},
+			{property: "og:image:height", content: "630"},
 			{
 				hid: 'description', name: 'description',
 				content:
-					"Toto je první, největší, a nejlepší crowd-unfunding v dějinách česka." +
+					"Toto je první, největší, a nejlepší crowd-unfunding v dějinách Česka." +
 					" Pošlete haléř a oni zaplatí 6 kč transakční poplatek :)" +
 					" S láskou, pro Bureše."
 			}

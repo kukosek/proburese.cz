@@ -19,7 +19,7 @@
     </h2>
     <h3 class="subtitle is-6 has-text-grey">
 		Transparentní účty budou pravděpodobně někdy zrušeny, tak chci
-		uchovat ty nejlepší zprávy, aby jsme se mohli zasmát i po volbách.
+		uchovat ty nejlepší zprávy, abychom se mohli zasmát i po volbách.
     </h3>
 
     <h2 class="title is-3 has-text-grey">

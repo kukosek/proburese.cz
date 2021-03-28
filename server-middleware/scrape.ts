@@ -87,9 +87,6 @@ async function main() {
 									.replace(/[^\d.-]/g, '');
 								// determine the amount in CZK
 								const amount = parseFloat(amountStr)
-								if (amountStr.length > 5) {
-									console.log(amountStr, "->", amount)
-								}
 
 								donate.amount = amount.toString()
 
@@ -170,10 +167,10 @@ async function main() {
 
 									await donateDonator.save()
 									donate.authorId = donateDonator.id
-									//console.log(donate)
+									console.log(donate)
 									if (foundUser) {
 										console.log("found user with this name")
-										console.log("donate")
+										console.log(accountId)
 										foundUser.donatorId = donateDonator.id
 										await foundUser.save()
 									}
@@ -181,7 +178,7 @@ async function main() {
 									await account.save()
 									parsingSameCount = 0
 								} else {
-									//console.log("already parsed at skip: ", currentSkip)
+									console.log(accountId, " already parsed at skip: ", currentSkip)
 									// We already parsed it somewhere, so we can assume the next
 									// items will be also parsed
 									if (!perform_full_parse_now)
@@ -192,7 +189,7 @@ async function main() {
 								//console.info("Odchozi")
 							}
 						} else {
-							console.debug("errorous:", item.notes)
+							console.debug(accountId, "errorous:", item.notes)
 						}
 
 					}

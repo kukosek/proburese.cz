@@ -76,9 +76,9 @@
 
 		<p>
 		Pošlete taky něco pěkného na účet
-		<a href="https://www.kb.cz/cs/transparentni-ucty/4090453">
+		<a href="https://www.kb.cz/cs/transparentni-ucty/4090453" target="_blank">
 			 4090453/0100
-		</a> :)
+		</a> nebo <a href="https://www.kb.cz/cs/transparentni-ucty/4070217" target="_blank">4070217/0100</a> :)
 		</p>
 		<br>
         <p class="menu-label is-hidden-touch">

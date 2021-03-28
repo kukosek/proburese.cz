@@ -5,7 +5,7 @@
 		<div class="columns is-vcentered is-desktop">
 			<div class="column is-narrow card-header-title has-text-grey">
 				<span class="has-text-weight-medium">celkem</span>
-				{{ numberFormat.format(data.amountDonated) }} kč
+				{{ numberFormat.format(data.amountDonated) }} Kč
 				<span class="has-text-weight-medium">od</span>
 					<nuxt-link
 					  :to="'/donator/'+data.id"

@@ -19,7 +19,7 @@
 	  <div class="level-item has-text-centered">
 		<div>
 		  <p class="heading">Celkově zasláno</p>
-		  <p class="title">{{donator.amountDonated}} kč</p>
+		  <p class="title">{{numberFormat.format(donator.amountDonated)}} Kč</p>
 		</div>
 	  </div>
 	  <div class="level-item has-text-centered">
@@ -142,6 +142,10 @@ interface Donator {
 
 const take = 25;
 
+Component.registerHooks([
+  'head',
+])
+
 @Component<Index>({
 	components: {
 		Card
@@ -190,6 +194,7 @@ export default class Index extends Vue {
 
 	private page = 0
 
+	private numberFormat = new Intl.NumberFormat('cs-CZ')
 
 	@Watch('searchString')
 	@Watch('currentSort')
@@ -218,9 +223,14 @@ export default class Index extends Vue {
 
 	private hasMore = true
 
+	head() {
+		return {title:
+			this.numberFormat.format(this.donator.amountDonated)
+			+ " Kč pro Bureše od " + this.donator.name
+		}
+	}
 
 	mounted() {
-		//document.title = "Příspěvky od " + this.donator.name + ' - Probureše'
 		window.onscroll = () => {
 			if (this.hasMore) {
 				let distFromBottom = document.documentElement.offsetHeight - document.documentElement.scrollTop - window.innerHeight

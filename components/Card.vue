@@ -4,7 +4,7 @@
       <div class="card-content" >
 		<div class="columns is-vcentered is-desktop">
 			<p class="column is-narrow card-header-title has-text-grey">
-				{{ data.amount }} kč od
+				{{ numberFormat.format(data.amount) }} Kč od
 					<nuxt-link
 					  :to="'/donator/'+data.authorId"
 					  exact-active-class="is-active"
@@ -15,8 +15,18 @@
 			<div v-html="data.message" v-linkified class="column ">
 			</div>
 
+
 			<div class="column is-narrow is-flex is-flex-direction-column is-align-items-center has-text-grey m-0 p-0">
 				<b-field class="m-0">
+			<b-button
+				tag="a"
+				type="is-text"
+				v-clipboard:copy="shareUrl"
+				v-clipboard:success="copySuccess"
+				v-clipboard:error="copyError"
+				size="is-small"
+				icon-right="content-copy"
+			/>
 					<b-checkbox-button size="is-small" v-model="checkboxGroup"
 						native-value="dislike"
 						type="is-danger">
@@ -76,6 +86,11 @@ export default class Card extends Vue{
 
 	private ignoreNext = false
 
+	private numberFormat = new Intl.NumberFormat('cs-CZ')
+
+	get shareUrl() {
+		return "http://proburese.cz/donate/"+ this.data.id
+	}
 
 	@Watch('checkboxGroup')
 	onCheckboxGroupChanged(value: string[]) : void {
@@ -151,6 +166,24 @@ export default class Card extends Vue{
 	}
 	get authorized() {
 		return this.$store.state.authorized
+	}
+	copySuccess() {
+		this.$buefy.toast.open({
+			message: 'Odkaz na položku byl zkopírován do schránky',
+			type: 'is-success'
+		})
+	}
+
+	copyError() {
+		this.$buefy.dialog.prompt({
+			message: `Zkopírujte si odkaz.`,
+			inputAttrs: {
+				value: this.shareUrl,
+				placeholder: 'Oh, tys to smazal!',
+				maxlength: 50
+			},
+			trapFocus: true,
+		})
 	}
 }
 </script>
