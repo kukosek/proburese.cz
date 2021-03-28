@@ -26,8 +26,8 @@ async function main() {
 	const donateRepository: Repository<Donate> = getRepository(Donate)
 	const userRepository: Repository<User> = getRepository(User)
 	console.log("made connection")
-	var currentSkip: number = 0
 	for (const accountId of accounts) {
+		var currentSkip: number = 0
 		var account: DonateScrapingState | undefined = await scrapingStateRepo.findOne({
 			where: {account: accountId}
 		})
