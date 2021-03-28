@@ -14,5 +14,8 @@ export default {
 	"entities": [
 		"server-middleware/entity/*.*"
 	],
-	namingStrategy: new SnakeNamingStrategy()
+	namingStrategy: new SnakeNamingStrategy(),
+	cache: {
+		duration: 30000
+	}
 }

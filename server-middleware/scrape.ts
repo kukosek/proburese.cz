@@ -8,6 +8,7 @@ import {BuresUser as User} from "./entity/User"
 import {KbResponse} from "./scrape/kbtypes"
 import {getRepository, Repository} from "typeorm"
 import {Moment} from 'moment'
+import {trackStats} from "./statistic-tracker"
 import fetch from 'node-fetch'
 let moment = require('moment');
 
@@ -209,6 +210,8 @@ async function main() {
 			await timer(3000)
 		}
 	}
+	console.log("tracking stats")
+	await trackStats()
 	console.log("Finished.")
 	console.log()
 }

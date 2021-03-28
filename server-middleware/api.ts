@@ -31,6 +31,7 @@ import {Session} from "./entity/Session"
 
 import {authChecker} from "./modules/auth-checker"
 import {DonatorResolver} from './modules/Donator';
+import {MonthStatResolver} from './modules/MonthStat';
 
 
 
@@ -131,7 +132,7 @@ const main = async () => {
 
 
 	const schema = await buildSchema({
-		resolvers: [DonateResolver, UserResolver, DonatorResolver],
+		resolvers: [DonateResolver, UserResolver, DonatorResolver, MonthStatResolver],
 		authChecker: authChecker,
 	});
 	const apolloServer = new ApolloServer({

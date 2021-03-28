@@ -1,7 +1,5 @@
 import {
 	Resolver, Query, Arg,
-	Field, ArgsType, Args,
-	registerEnumType, ID, InputType,
 	Mutation, Ctx,
 	Authorized
 } from 'type-graphql';

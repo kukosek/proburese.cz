@@ -31,6 +31,9 @@ query($id: Float!) {
 }
 `
 
+Component.registerHooks([
+  'head',
+])
 
 @Component<Donate>({
 	components: {
@@ -61,6 +64,10 @@ export default class Donate extends Vue {
 		if (process.server) {
 			this.$apollo.queries.donate.refetch()
 		}
+	}
+
+	head() {
+		return {title: this.donate.author + " pro Bureše: " + this.donate.message}
 	}
 
 	private hasMore = true

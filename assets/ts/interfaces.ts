@@ -1,3 +1,7 @@
+export interface MonthStat {
+	x: string,
+	y: number
+}
 export interface CardData {
 	id: number,
 	author: string,

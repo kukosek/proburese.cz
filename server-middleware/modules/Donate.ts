@@ -68,6 +68,7 @@ export class DonateResolver {
 		let query = Donate.createQueryBuilder()
 			.skip(skip)
 			.take(take)
+			.cache(true)
 		var whereExpr = "duplicate = false"
 		var whereParams = {searchLikeStr: "", authorId: 0}
 		if (search != "") {
