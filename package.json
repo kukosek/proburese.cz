@@ -3,7 +3,6 @@
 	"version": "1.0.0",
 	"private": true,
 	"scripts": {
-		"graphql-gen": "graphql-codegen --config codegen.yml",
 		"dev": "nuxt",
 		"build": "nuxt build",
 		"start": "nuxt start",
@@ -45,6 +44,7 @@
 		"nuxt-buefy": "^0.4.4",
 		"passport": "^0.4.1",
 		"passport-facebook": "^3.0.0",
+		"passport-google-oauth": "^2.0.0",
 		"pg": "^8.5.1",
 		"reflect-metadata": "^0.1.13",
 		"sass": "^1.32.8",
@@ -77,6 +77,7 @@
 		"@types/graphql": "^14.5.0",
 		"@types/graphql-depth-limit": "^1.1.2",
 		"@types/node": "^12.20.6",
+		"@types/passport-google-oauth": "^1.0.41",
 		"babel-eslint": "^10.1.0",
 		"eslint": "^7.22.0",
 		"eslint-plugin-nuxt": "^2.0.0",

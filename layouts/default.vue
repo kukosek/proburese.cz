@@ -59,6 +59,14 @@
 								class="button has-text-centered is-link">
 							Přihlásit se přes Facebook</b-button>
 							</p>
+							<p>
+							<b-button
+								tag="a"
+								href="/api/auth/google"
+								icon-left="google"
+								class="m-2 button has-text-centered is-text">
+							Přihlásit se přes Google</b-button>
+							</p>
 
 						</section>
 						<footer class="modal-card-foot">

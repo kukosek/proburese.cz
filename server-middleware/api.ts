@@ -17,6 +17,7 @@ import {UserResolver} from "./modules/User"
 import passport from "passport";
 
 import {Strategy as FacebookStrategy} from "passport-facebook"
+import {OAuth2Strategy as GoogleStrategy} from "passport-google-oauth"
 
 var session = require("express-session"),
 	bodyParser = require("body-parser");
@@ -182,11 +183,32 @@ const main = async () => {
 			})
 		}
 	));
+	passport.use(new GoogleStrategy({
+		clientID: process.env.GOOGLE_CLIENT_ID!,
+		clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+		callbackURL: process.env.OAUTH_REDIRECT_BASEURL + "/api/auth/google/callback"
+	},
+		function (accessToken, refreshToken, profile, done) {
+			registerUser(donatorRepository, profile).then((foundUser) => {
+				return done(null, foundUser)
+			})
+		}
+	));
+
 
 
 
 
 	app.get('/auth/facebook', passport.authenticate('facebook'));
+	app.get('/auth/google',
+		passport.authenticate('google', {scope: ['https://www.googleapis.com/auth/plus.login']}));
+	app.get('/auth/google/callback',
+		passport.authenticate('google', {failureRedirect: '/login'}),
+		function (req, res) {
+			res.redirect('/');
+		}
+	);
+
 
 	app.get('/auth/facebook/callback',
 		passport.authenticate('facebook', {
