@@ -1,0 +1,28 @@
+version: '3.1'
+
+services:
+    proburese-db:
+        image: postgres
+        restart: always
+        volumes:
+            - ./.data/db:/var/lib/postgresql/data
+        environment:
+            - postgres_db=postgres
+            - postgres_user=postgres
+            - POSTGRES_PASSWORD=superman
+    proburese-api:
+        image: proburese-api
+        restart: always
+        depends_on:
+            - proburese-db
+    proburese-scrape:
+        image: proburese-scrape
+        restart: always
+        depends_on:
+            - proburese-db
+    proburese-nuxt:
+        image: proburese-nuxt
+        restart: always
+        depends_on:
+            - proburese-api
+

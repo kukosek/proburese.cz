@@ -13,8 +13,8 @@
 		"allowJs": true,
 		"sourceMap": true,
 		"strict": true,
-		"noEmit": true,
 		"experimentalDecorators": true,
+		"outDir": "dist",
 		"baseUrl": ".",
 		"paths": {
 			"~/*": [

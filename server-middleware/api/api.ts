@@ -5,15 +5,15 @@ import {ApolloServer} from 'apollo-server-express';
 
 import {createConnection, getRepository, Repository} from "typeorm";
 
-import {ContextType} from "./modules/Context"
+import {ContextType} from "../modules/Context"
 
 import {
 	buildSchema
 } from 'type-graphql';
 
 
-import {DonateResolver} from "./modules/Donate"
-import {UserResolver} from "./modules/User"
+import {DonateResolver} from "../modules/Donate"
+import {UserResolver} from "../modules/User"
 import passport from "passport";
 
 import {Strategy as FacebookStrategy} from "passport-facebook"
@@ -22,17 +22,17 @@ import {OAuth2Strategy as GoogleStrategy} from "passport-google-oauth"
 var session = require("express-session"),
 	bodyParser = require("body-parser");
 
-import {BuresUser} from "./entity/User"
-import {Donator} from "./entity/Donator"
+import {BuresUser} from "../entity/User"
+import {Donator} from "../entity/Donator"
 
-import {normalizeName} from "./utils/normalize-name"
+import {normalizeName} from "../utils/normalize-name"
 
 import {TypeormStore} from "connect-typeorm"
-import {Session} from "./entity/Session"
+import {Session} from "../entity/Session"
 
-import {authChecker} from "./modules/auth-checker"
-import {DonatorResolver} from './modules/Donator';
-import {MonthStatResolver} from './modules/MonthStat';
+import {authChecker} from "../modules/auth-checker"
+import {DonatorResolver} from '../modules/Donator';
+import {MonthStatResolver} from '../modules/MonthStat';
 
 
 

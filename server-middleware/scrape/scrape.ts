@@ -1,14 +1,14 @@
 import {createConnection} from "typeorm";
 require('dotenv').config()
-import {DonateScrapingState} from "./entity/DonateScrapingState"
-import {Donate} from "./entity/Donate"
-import {normalizeName} from "./utils/normalize-name"
-import {Donator} from "./entity/Donator"
-import {BuresUser as User} from "./entity/User"
-import {KbResponse} from "./scrape/kbtypes"
+import {DonateScrapingState} from "../entity/DonateScrapingState"
+import {Donate} from "../entity/Donate"
+import {normalizeName} from "../utils/normalize-name"
+import {Donator} from "../entity/Donator"
+import {BuresUser as User} from "../entity/User"
+import {KbResponse} from "../scrape/kbtypes"
 import {getRepository, Repository} from "typeorm"
 import {Moment} from 'moment'
-import {trackStats} from "./statistic-tracker"
+import {trackStats} from "../statistic-tracker"
 import fetch from 'node-fetch'
 let moment = require('moment');
 

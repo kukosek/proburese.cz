@@ -8,7 +8,9 @@
 		"start": "nuxt start",
 		"generate": "nuxt generate",
 		"lint:js": "eslint --ext \".js,.vue\" --ignore-path .gitignore .",
-		"lint": "npm run lint:js"
+		"lint": "npm run lint:js",
+		"api": "ts-node --transpile-only server-middleware/api/api.ts",
+		"scrape": "ts-node --transpile-only server-middleware/scrape/scrape.ts"
 	},
 	"dependencies": {
 		"@apollo/client": "^3.3.12",

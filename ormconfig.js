@@ -16,6 +16,6 @@ export default {
 	],
 	namingStrategy: new SnakeNamingStrategy(),
 	cache: {
-		duration: 30000
+		duration: 5
 	}
 }

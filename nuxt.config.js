@@ -66,10 +66,12 @@ export default {
 	},
 	apollo: {
 		clientConfigs: {
-			default: {
-				httpEndpoint: process.env.GRAPHQL_ENDPOINT.toString(),
-			}
+			default: '~/apollo.config.js'
 		}
+	},
+	publicRuntimeConfig: {
+		browserHttpEndpoint: process.env.GRAPHQL_ENDPOINT.toString(),
+		httpEndpoint: process.env.GRAPHQL_SERVER_ENDPOINT.toString(),
 	},
 
 	// Build Configuration: https://go.nuxtjs.dev/config-build
